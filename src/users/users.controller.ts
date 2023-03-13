@@ -1,7 +1,7 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { Body, Post } from '@nestjs/common/decorators';
 import { ApiTags } from '@nestjs/swagger/dist';
-import { ApiAcceptedResponse, ApiCreatedResponse, ApiOkResponse, ApiQuery } from '@nestjs/swagger/dist/decorators';
+import { ApiAcceptedResponse, ApiBadRequestResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiQuery } from '@nestjs/swagger/dist/decorators';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
@@ -17,14 +17,20 @@ export class UsersController {
   getUsers(@Query('name') name?: string): User[] {
     return this.usersService.findAll(name);
   }
-  //Need toDo auto parse or cast id
+  //Need toDo auto parse or cast id -> doing this by pipes like middleware , it has 2 use cases transformation(ParseIntPipe) & validation
   @ApiOkResponse({ type: User, isArray: false })
+  @ApiNotFoundResponse() //documentation the error
   @Get(':id')
-  getUserById(@Param('id') id: string): User | undefined {
-    return this.usersService.findById(Number(id));
+  getUserById(@Param('id', ParseIntPipe) id: number): User | undefined {
+    const user = this.usersService.findById(id);
+    if (!user) {
+      throw new NotFoundException(); //builtin error handling 404
+    }
+    return user;
   }
 
   @ApiCreatedResponse({ type: User }) //201 http request with shape of User entity
+  @ApiBadRequestResponse()
   @Post()
   createUser(@Body() body: CreateUserDto): User {
     return this.usersService.createUser(body);
