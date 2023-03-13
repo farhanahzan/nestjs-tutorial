@@ -1,4 +1,8 @@
+import { ApiProperty } from "@nestjs/swagger/dist/decorators";
+
 export class User {
+  @ApiProperty()
   id: number;
-  name?: string;
+  @ApiProperty()
+  name: string;
 }
